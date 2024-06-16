@@ -1,11 +1,11 @@
-const { Client, Intents } = require('discord.js')
+const { Client, GatewayIntentBits } = require('discord.js')
 const { MongoClient } = require('mongodb')
 const dotenv = require('dotenv')
 
 dotenv.config()
 
-
-const dcClient = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] })
+const dcClient = new Client({intents: [GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageTyping]})
+dcClient.login(process.env.DC_BOT_TOKEN)
 
 dcClient.once('ready', () => {
     console.log('bot is online!')
@@ -14,7 +14,6 @@ dcClient.once('ready', () => {
 
 
 const mongoClient = new MongoClient(process.env.MONGO_URI)
-monitorChanges()
 
 async function monitorChanges(){
     try{
@@ -26,6 +25,7 @@ async function monitorChanges(){
         console.log('listening for changes')
         changeStream.on('change', (change) => {
             console.log('Change detected: ', change)
+            sendMessage('may nagbago pacheck')
            
         })
     } 
@@ -34,3 +34,18 @@ async function monitorChanges(){
     } 
 }
 
+async function sendMessage(change){
+    const channel = await dcClient.channels.fetch(process.env.CHANNEL_ID)
+    console.log(channel)
+    channel.send('may nagbago pacheck')
+}
+
+
+async function cleanup(){
+    await mongoClient.close()
+    console.log('client disconnected!')
+}
+
+process.on('SIGTERM',cleanup);  //general termination signal
+process.on('SIGINT',cleanup);   //catches when ctrl + c is used
+process.on('SIGQUIT', cleanup); //catches other termination commands
