@@ -24,8 +24,9 @@ async function monitorChanges(){
 
         console.log('listening for changes')
         changeStream.on('change', (change) => {
+            
             console.log('Change detected: ', change)
-            sendMessage('may nagbago pacheck')
+            sendMessage(change, tickets)
            
         })
     } 
@@ -34,10 +35,36 @@ async function monitorChanges(){
     } 
 }
 
-async function sendMessage(change){
+async function sendMessage(change, tickets){
+
+    const update = await tickets.findOne({_id : change.documentKey._id})
+
+    let message = ''
+    if(change.operationType === 'update'){
+        message = 
+`@everyone, ticket ${change.documentKey._id.toString()} has been set to **${change.updateDescription.updatedFields.status}**. 
+        
+**Title**: ${update.name}
+
+**Description**: ${update.description}\n
+        
+View more of the ticket details here: http://localhost:3000/ticket/${change.documentKey._id.toString()}`
+    }
+
+    if(change.operationType === 'create'){
+        message = 
+`@everyone a new ticket has been added.
+
+**Title**: ${update.name}
+
+**Description**: ${update.description}\n
+        
+View more of the ticket details here: http://localhost:3000/ticket/${change.documentKey._id.toString()}`
+    }
+
     const channel = await dcClient.channels.fetch(process.env.CHANNEL_ID)
     console.log(channel)
-    channel.send('may nagbago pacheck')
+    channel.send(message)
 }
 
 
