@@ -100,6 +100,7 @@ View more of the ticket details here: http://localhost:3000/ticket/${change.docu
 async function cleanup(){
     await mongoClient.close()
     console.log('client disconnected!')
+    dcClient.destroy()
 }
 
 process.on('SIGTERM',cleanup);  //general termination signal
