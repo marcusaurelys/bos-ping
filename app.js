@@ -1,5 +1,5 @@
 const { Client, GatewayIntentBits } = require('discord.js')
-const { MongoClient } = require('mongodb')
+const { MongoClient, ObjectId } = require('mongodb')
 const dotenv = require('dotenv')
 
 dotenv.config()
@@ -39,16 +39,45 @@ async function sendMessage(change, tickets){
 
     const update = await tickets.findOne({_id : change.documentKey._id})
 
-    let message = ''
+    let message = 'ping'
     if(change.operationType === 'update'){
-        message = 
+        if(change.updateDescription.updatedFields.status){
+                    message = 
 `@everyone, ticket ${change.documentKey._id.toString()} has been set to **${change.updateDescription.updatedFields.status}**. 
-        
+                    
 **Title**: ${update.name}
 
 **Description**: ${update.description}\n
-        
+                    
 View more of the ticket details here: http://localhost:3000/ticket/${change.documentKey._id.toString()}`
+        }
+        else if(change.updateDescription.updatedFields.userIDs){
+           
+           const userIDs =  change.updateDescription.updatedFields.userIDs.map(id => new ObjectId(id))
+           const discordUsernames = await mongoClient.db('business-os').collection('users').find(
+            {_id: {$in: userIDs}}, 
+            {projection: {discord: 1}}
+        ).toArray()
+            const mention = discordUsernames.map((username) => `<@${username.discord}>`)
+            console.log(discordUsernames)
+            console.log(mention)
+            message = 
+`${mention.join(', ') } you have been assigned to ticket ${change.documentKey._id.toString()}.
+
+**Title**: ${update.name}
+
+**Description**: ${update.description}
+
+
+View more of the ticket details here: http://localhost:3000/ticket/${change.documentKey._id.toString()}
+
+`
+
+
+           
+
+           
+        }
     }
 
     if(change.operationType === 'create'){
