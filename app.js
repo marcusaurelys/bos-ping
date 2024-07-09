@@ -39,10 +39,10 @@ async function sendMessage(change, tickets){
 
     const update = await tickets.findOne({_id : change.documentKey._id})
 
-    let message = 'ping'
+    let message = ''
     if(change.operationType === 'update'){
         if(change.updateDescription.updatedFields.status){
-                    message = 
+            message = 
 `@everyone, ticket ${change.documentKey._id.toString()} has been set to **${change.updateDescription.updatedFields.status}**. 
                     
 **Title**: ${update.name}
@@ -50,14 +50,15 @@ async function sendMessage(change, tickets){
 **Description**: ${update.description}\n
                     
 View more of the ticket details here: http://localhost:3000/ticket/${change.documentKey._id.toString()}`
+        
         }
-        else if(change.updateDescription.updatedFields.userIDs){
+        else if(change.updateDescription.updatedFields.userIDs && change.updateDescription.updatedFields.userIDs.length > 0){
            
            const userIDs =  change.updateDescription.updatedFields.userIDs.map(id => new ObjectId(id))
            const discordUsernames = await mongoClient.db('business-os').collection('users').find(
             {_id: {$in: userIDs}}, 
             {projection: {discord: 1}}
-        ).toArray()
+            ).toArray()
             const mention = discordUsernames.map((username) => `<@${username.discord}>`)
             console.log(discordUsernames)
             console.log(mention)
@@ -70,12 +71,7 @@ View more of the ticket details here: http://localhost:3000/ticket/${change.docu
 
 
 View more of the ticket details here: http://localhost:3000/ticket/${change.documentKey._id.toString()}
-
 `
-
-
-           
-
            
         }
     }
@@ -91,9 +87,11 @@ View more of the ticket details here: http://localhost:3000/ticket/${change.docu
 View more of the ticket details here: http://localhost:3000/ticket/${change.documentKey._id.toString()}`
     }
 
-    const channel = await dcClient.channels.fetch(process.env.CHANNEL_ID)
-    console.log(channel)
-    channel.send(message)
+    if(message != ''){
+        const channel = await dcClient.channels.fetch(process.env.CHANNEL_ID)
+        console.log(channel)
+        channel.send(message)
+    }
 }
 
 
