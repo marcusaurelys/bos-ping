@@ -76,7 +76,7 @@ View more of the ticket details here: http://localhost:3000/ticket/${change.docu
         }
     }
 
-    if(change.operationType === 'create'){
+    if(change.operationType === 'insert'){
         message = 
 `@everyone a new ticket has been added.
 
